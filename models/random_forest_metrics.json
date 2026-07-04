@@ -1,0 +1,20 @@
+{
+  "model_name": "Random Forest",
+  "best_params": {
+    "bootstrap": true,
+    "class_weight": "balanced",
+    "criterion": "gini",
+    "max_depth": 20,
+    "max_features": "sqrt",
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "n_estimators": 500
+  },
+  "best_cv_f1": 0.9375406364142022,
+  "test_metrics": {
+    "accuracy": 0.9468503937007874,
+    "precision": 0.9453155002590461,
+    "recall": 0.9463540812141099,
+    "f1": 0.9455033283456004
+  }
+}
