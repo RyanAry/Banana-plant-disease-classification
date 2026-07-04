@@ -34,7 +34,7 @@ atau ekstrak file ZIP.
 ## 2. Masuk ke Folder Project
 
 ```bash
-cd classification_penyakit_pohon_pisang
+cd Banana Leaf Disease Classification
 ```
 
 ---
