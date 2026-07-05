@@ -35,11 +35,11 @@ def index():
 	if request.method == "POST":
 		logger.info("Received POST request for image upload")
 		file_storage = request.files.get("image")
-		is_valid, error_message = validate_image_upload(file_storage) if file_storage is not None else (False, "Please select an image file.")
+		is_valid, error_message = validate_image_upload(file_storage) if file_storage is not None else (False, "Silakan pilih file gambar.")
 
 		if not is_valid:
 			logger.warning("Validation failed: %s", error_message)
-			return set_error(error_message or "Please select an image file.")
+			return set_error(error_message or "Silakan pilih file gambar.")
 
 		image_path = None
 		try:
@@ -64,9 +64,9 @@ def index():
 		except Exception:
 			logger.exception("Unexpected error during prediction")
 			_cleanup_uploaded_file(image_path)
-			return set_error("An unexpected error occurred while processing the image.", 500)
+			return set_error("Terjadi kesalahan tak terduga saat memproses gambar.", 500)
 
-		context["success_message"] = "Image uploaded successfully."
+		context["success_message"] = "Gambar berhasil diunggah."
 		context["uploaded_image"] = filename
 		context["prediction_result"] = prediction_result
 

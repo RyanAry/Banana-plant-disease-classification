@@ -217,3 +217,48 @@ body {
     padding-right: 0;
   }
 }
+
+/* ---- Probability Analysis Bars ---- */
+
+.probability-item {
+  transition: transform 0.15s ease;
+}
+
+.probability-item:hover {
+  transform: translateX(4px);
+}
+
+.prob-class-name {
+  font-size: 0.95rem;
+  color: var(--site-text);
+}
+
+.prob-percentage {
+  font-size: 0.95rem;
+  color: var(--site-muted);
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+.prob-percentage.text-accent {
+  color: var(--site-accent);
+}
+
+.prob-progress-bar {
+  height: 0.6rem;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  overflow: hidden;
+}
+
+.prob-bar-active {
+  background: linear-gradient(90deg, var(--site-accent), #16a34a);
+  border-radius: 0.5rem;
+  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.prob-bar-default {
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.5), rgba(56, 189, 248, 0.3));
+  border-radius: 0.5rem;
+  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}

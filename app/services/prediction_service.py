@@ -24,6 +24,7 @@ class PredictionResult:
 	confidence: float
 	description: str
 	recommendation: str
+	class_probabilities: dict[str, float]
 
 
 class PredictionServiceError(Exception):
@@ -44,25 +45,32 @@ class PredictionFailureError(PredictionServiceError):
 
 DISEASE_METADATA: dict[str, dict[str, str]] = {
 	"healthy": {
-		"disease_name": "Healthy",
-		"description": "The banana leaf appears healthy and does not show visible signs of the tracked diseases.",
-		"recommendation": "Continue routine monitoring, irrigation, and field sanitation to maintain plant health.",
+		"disease_name": "Sehat",
+		"description": "Daun pisang terlihat sehat dan tidak menunjukkan tanda-tanda penyakit yang dilacak.",
+		"recommendation": "Lanjutkan pemantauan rutin, irigasi, dan sanitasi lahan untuk menjaga kesehatan tanaman.",
 	},
 	"cordana": {
 		"disease_name": "Cordana",
-		"description": "The leaf shows signs consistent with Cordana leaf spot, which can reduce leaf quality over time.",
-		"recommendation": "Remove heavily infected leaves, improve airflow, and apply appropriate fungicide management if needed.",
+		"description": "Daun menunjukkan tanda-tanda yang konsisten dengan bercak daun Cordana, yang dapat menurunkan kualitas daun seiring waktu.",
+		"recommendation": "Buang daun yang terinfeksi berat, tingkatkan sirkulasi udara, dan terapkan pengelolaan fungisida yang sesuai jika diperlukan.",
 	},
 	"pestalotiopsis": {
 		"disease_name": "Pestalotiopsis",
-		"description": "The image is consistent with Pestalotiopsis infection, often associated with leaf spotting and tissue damage.",
-		"recommendation": "Remove affected debris, avoid excessive leaf wetness, and monitor nearby plants for spread.",
+		"description": "Gambar konsisten dengan infeksi Pestalotiopsis, yang sering dikaitkan dengan bercak daun dan kerusakan jaringan.",
+		"recommendation": "Buang sisa tanaman yang terkena, hindari kelembaban daun berlebihan, dan pantau tanaman di sekitarnya untuk penyebaran.",
 	},
 	"sigatoka": {
 		"disease_name": "Black Sigatoka",
-		"description": "The model detected patterns consistent with Black Sigatoka, a serious banana leaf disease.",
-		"recommendation": "Remove infected leaves, maintain good field sanitation, and follow a preventive fungicide program.",
+		"description": "Model mendeteksi pola yang konsisten dengan Black Sigatoka, penyakit daun pisang yang serius.",
+		"recommendation": "Buang daun yang terinfeksi, jaga sanitasi lahan, dan ikuti program fungisida preventif.",
 	},
+}
+
+DISEASE_DISPLAY_NAMES: dict[str, str] = {
+	"healthy": "Sehat",
+	"cordana": "Cordana",
+	"pestalotiopsis": "Pestalotiopsis",
+	"sigatoka": "Black Sigatoka",
 }
 
 
@@ -85,12 +93,12 @@ def load_model_artifact(model_path: str) -> dict[str, Any]:
 	"""Load and cache a model artifact. Automatically reloads when the file changes."""
 	model_file = Path(model_path)
 	if not model_file.exists():
-		raise MissingModelError("Trained model file is missing. Please train the model first.")
+		raise MissingModelError("File model terlatih tidak ditemukan. Silakan latih model terlebih dahulu.")
 
 	try:
 		current_hash = _file_hash(model_file)
 	except OSError as error:
-		raise MissingModelError("Trained model file could not be read.") from error
+		raise MissingModelError("File model terlatih tidak dapat dibaca.") from error
 
 	cache_key = str(model_file.resolve())
 	cached = _model_cache.get(cache_key)
@@ -106,7 +114,7 @@ def load_model_artifact(model_path: str) -> dict[str, Any]:
 		logger.info("Loading model from %s", model_path)
 		artifact = joblib.load(model_file)
 	except Exception as error:
-		raise MissingModelError("Trained model file could not be loaded. Please retrain the model.") from error
+		raise MissingModelError("File model terlatih tidak dapat dimuat. Silakan latih ulang model.") from error
 
 	_model_cache[cache_key] = (current_hash, artifact)
 	return artifact
@@ -124,17 +132,18 @@ def _get_model_classes(model: Any) -> list:
 	return []
 
 
-def _compute_confidence(model: Any, features: pd.DataFrame, predicted_label: str) -> float:
-	"""Compute prediction confidence supporting predict_proba, decision_function, or fallback."""
+def _compute_all_probabilities(model: Any, features: pd.DataFrame) -> dict[str, float]:
+	"""Compute prediction probabilities for ALL classes, returning a dict of {label: probability}."""
+	classes = _get_model_classes(model)
+	if not classes:
+		logger.warning("No classes found in model, returning empty probabilities")
+		return {}
 
 	# 1) predict_proba — Random Forest, SVM with probability=True, etc.
 	if hasattr(model, "predict_proba"):
 		try:
 			probabilities = model.predict_proba(features)
-			classes = _get_model_classes(model)
-			if predicted_label in classes:
-				class_index = classes.index(predicted_label)
-				return float(probabilities[0, class_index])
+			return {str(cls): float(probabilities[0, i]) for i, cls in enumerate(classes)}
 		except Exception:
 			logger.warning("predict_proba failed, falling back to decision_function")
 
@@ -149,16 +158,20 @@ def _compute_confidence(model: Any, features: pd.DataFrame, predicted_label: str
 			shifted = scores - np.max(scores, axis=1, keepdims=True)
 			exp_values = np.exp(shifted)
 			probabilities = exp_values / np.sum(exp_values, axis=1, keepdims=True)
-			classes = _get_model_classes(model)
-			if predicted_label in classes:
-				class_index = classes.index(predicted_label)
-				return float(probabilities[0, class_index])
+			return {str(cls): float(probabilities[0, i]) for i, cls in enumerate(classes)}
 		except Exception:
 			logger.warning("decision_function failed")
 
-	# 3) Fallback
-	logger.warning("No confidence method available, returning 0.0")
-	return 0.0
+	# 3) Fallback — equal distribution
+	logger.warning("No probability method available, returning uniform distribution")
+	uniform_prob = 1.0 / len(classes) if classes else 0.0
+	return {str(cls): uniform_prob for cls in classes}
+
+
+def _compute_confidence(model: Any, features: pd.DataFrame, predicted_label: str) -> float:
+	"""Compute prediction confidence supporting predict_proba, decision_function, or fallback."""
+	all_probs = _compute_all_probabilities(model, features)
+	return all_probs.get(predicted_label, 0.0)
 
 
 def predict_image(image_path: str | Path, model_path: str) -> PredictionResult:
@@ -175,24 +188,32 @@ def predict_image(image_path: str | Path, model_path: str) -> PredictionResult:
 		features = pd.DataFrame([[feature_vector[column] for column in feature_columns]], columns=feature_columns)
 	except Exception as error:
 		logger.error("Feature extraction failed: %s", error)
-		raise FeatureExtractionError("Feature extraction failed for the uploaded image.") from error
+		raise FeatureExtractionError("Ekstraksi fitur gagal untuk gambar yang diunggah.") from error
 
 	try:
 		logger.info("Running model prediction...")
 		predicted_label = model.predict(features)[0]
 	except Exception as error:
 		logger.error("Prediction failed: %s", error)
-		raise PredictionFailureError("Prediction failed for the uploaded image.") from error
+		raise PredictionFailureError("Prediksi gagal untuk gambar yang diunggah.") from error
 
 	metadata = DISEASE_METADATA.get(predicted_label, {
 		"disease_name": str(predicted_label).title(),
-		"description": "The model produced a prediction for the uploaded banana leaf image.",
-		"recommendation": "Review the image with field observations and consider expert verification if needed.",
+		"description": "Model menghasilkan prediksi untuk gambar daun pisang yang diunggah.",
+		"recommendation": "Tinjau gambar dengan pengamatan lapangan dan pertimbangkan verifikasi ahli jika diperlukan.",
 	})
 
-	confidence = _compute_confidence(model, features, predicted_label)
+	all_probabilities = _compute_all_probabilities(model, features)
+	confidence = all_probabilities.get(predicted_label, 0.0)
+
+	# Map raw class labels to display names for the UI
+	class_probabilities = {}
+	for label, prob in sorted(all_probabilities.items(), key=lambda x: x[1], reverse=True):
+		display_name = DISEASE_DISPLAY_NAMES.get(label, str(label).title())
+		class_probabilities[display_name] = round(prob * 100, 2)
 
 	logger.info("Prediction: %s (confidence: %.4f)", predicted_label, confidence)
+	logger.info("All probabilities: %s", class_probabilities)
 
 	return PredictionResult(
 		disease_label=str(predicted_label),
@@ -200,4 +221,5 @@ def predict_image(image_path: str | Path, model_path: str) -> PredictionResult:
 		confidence=confidence,
 		description=metadata["description"],
 		recommendation=metadata["recommendation"],
+		class_probabilities=class_probabilities,
 	)

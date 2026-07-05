@@ -31,7 +31,7 @@ def create_app() -> Flask:
 		return (
 			render_template(
 				"index.html",
-				error_message="File is too large. Maximum upload size is 5 MB.",
+				error_message="File terlalu besar. Ukuran maksimal unggahan adalah 5 MB.",
 				uploaded_image=None,
 				prediction_result=None,
 			),

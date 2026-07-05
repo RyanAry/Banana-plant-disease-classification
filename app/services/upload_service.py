@@ -24,13 +24,13 @@ def is_allowed_mimetype(mimetype: str | None) -> bool:
 
 def validate_image_upload(file_storage: FileStorage) -> tuple[bool, str | None]:
 	if not file_storage.filename:
-		return False, "Please select an image file."
+		return False, "Silakan pilih file gambar."
 
 	if not is_allowed_extension(file_storage.filename):
-		return False, "Only JPG, JPEG, and PNG files are allowed."
+		return False, "Hanya file JPG, JPEG, dan PNG yang diizinkan."
 
 	if not is_allowed_mimetype(file_storage.mimetype):
-		return False, "Invalid MIME type. Please upload a JPEG or PNG image."
+		return False, "Tipe MIME tidak valid. Silakan unggah gambar JPEG atau PNG."
 
 	try:
 		image = Image.open(file_storage.stream)
@@ -39,13 +39,13 @@ def validate_image_upload(file_storage: FileStorage) -> tuple[bool, str | None]:
 		file_storage.stream.seek(0)
 	except UnidentifiedImageError:
 		file_storage.stream.seek(0)
-		return False, "The uploaded file is not a valid image."
+		return False, "File yang diunggah bukan gambar yang valid."
 	except Exception:
 		file_storage.stream.seek(0)
-		return False, "Unable to read the uploaded image."
+		return False, "Tidak dapat membaca gambar yang diunggah."
 
 	if image_format not in ALLOWED_IMAGE_FORMATS:
-		return False, "The uploaded image format is not supported."
+		return False, "Format gambar yang diunggah tidak didukung."
 
 	return True, None
 

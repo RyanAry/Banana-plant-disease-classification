@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Banana Leaf Disease Classification{% endblock %}
+{% block title %}Klasifikasi Penyakit Daun Pisang{% endblock %}
 
 {% block content %}
 <main id="home">
@@ -8,31 +8,32 @@
     <div class="container">
       <div class="row align-items-center g-5">
         <div class="col-lg-6">
-          <span class="badge rounded-pill hero-badge mb-3">Traditional Machine Learning</span>
-          <h1 class="display-4 fw-bold mb-3">Classify banana leaf diseases with a clean, production-ready workflow.</h1>
+          <span class="badge rounded-pill hero-badge mb-3">Machine Learning Tradisional</span>
+          <h1 class="display-4 fw-bold mb-3">Klasifikasi penyakit daun pisang dengan alur kerja yang bersih dan siap
+            produksi.</h1>
           <p class="lead text-secondary mb-4">
-            Upload a banana leaf image, then move through a structured pipeline designed for preprocessing,
-            feature extraction, model training, and prediction in future phases.
+            Unggah gambar daun pisang, lalu proses melalui pipeline terstruktur yang dirancang untuk
+            preprocessing, ekstraksi fitur, pelatihan model, dan prediksi.
           </p>
           <div class="d-flex flex-wrap gap-3">
-            <a class="btn btn-primary btn-lg px-4" href="#upload">Upload Image</a>
-            <a class="btn btn-outline-light btn-lg px-4" href="#features">View Features</a>
+            <a class="btn btn-primary btn-lg px-4" href="#upload">Unggah Gambar</a>
+            <a class="btn btn-outline-light btn-lg px-4" href="#features">Lihat Fitur</a>
           </div>
         </div>
         <div class="col-lg-6">
           <div class="hero-panel p-4 p-md-5">
             <div class="hero-stats">
               <div>
-                <span class="stat-label">Target Classes</span>
-                <span class="stat-value">Healthy, BlackSigatoka, Cordana, Panama</span>
+                <span class="stat-label">Kelas Target</span>
+                <span class="stat-value">Sehat, Black Sigatoka, Cordana, Pestalotiopsis</span>
               </div>
               <div>
-                <span class="stat-label">Stack</span>
+                <span class="stat-label">Teknologi</span>
                 <span class="stat-value">Flask + Bootstrap 5 + Jinja</span>
               </div>
               <div>
                 <span class="stat-label">Pipeline</span>
-                <span class="stat-value">Upload → Preprocess → Predict</span>
+                <span class="stat-value">Unggah → Preprocessing → Prediksi</span>
               </div>
             </div>
           </div>
@@ -48,9 +49,9 @@
           <div class="card upload-card border-0 shadow-lg">
             <div class="card-body p-4 p-md-5 text-center">
               <div class="upload-icon mb-3">+</div>
-              <h2 class="h3 fw-bold mb-2">Upload Leaf Image</h2>
+              <h2 class="h3 fw-bold mb-2 text-light">Unggah Gambar Daun</h2>
               <p class="text-secondary mb-4">
-                Upload a banana leaf image to preview it before the classification phases are added.
+                Unggah gambar daun pisang untuk mengklasifikasikan jenis penyakitnya secara otomatis.
               </p>
 
               {% if error_message %}
@@ -67,86 +68,75 @@
 
               <form method="post" enctype="multipart/form-data" class="text-start">
                 <div class="upload-dropzone p-4 p-md-5 mb-3">
-                  <label for="image" class="form-label fw-semibold">Choose image file</label>
-                  <input
-                    class="form-control form-control-lg upload-file-input"
-                    type="file"
-                    id="image"
-                    name="image"
-                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                    required
-                  >
+                  <label for="image" class="form-label fw-semibold">Pilih file gambar</label>
+                  <input class="form-control form-control-lg upload-file-input" type="file" id="image" name="image"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
                   <div class="form-text text-secondary mt-2">
-                    Allowed formats: JPG, JPEG, PNG. Maximum size: 5 MB.
+                    Format yang diizinkan: JPG, JPEG, PNG. Ukuran maksimal: 5 MB.
                   </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg px-4 w-100">Upload Image</button>
+                <button type="submit" class="btn btn-primary btn-lg px-4 w-100">Unggah Gambar</button>
               </form>
 
               {% if uploaded_image %}
               <div class="upload-preview mt-4 text-start">
-                <h3 class="h5 fw-bold mb-3">Uploaded Image Preview</h3>
+                <h3 class="h5 fw-bold mb-3">Pratinjau Gambar</h3>
                 <div class="upload-preview-frame p-3 p-md-4">
-                  <img
-                    src="{{ url_for('main.uploaded_file', filename=uploaded_image) }}"
-                    alt="Uploaded banana leaf image"
-                    class="img-fluid rounded-4 upload-preview-image"
-                  >
+                  <img src="{{ url_for('main.uploaded_file', filename=uploaded_image) }}"
+                    alt="Gambar daun pisang yang diunggah" class="img-fluid rounded-4 upload-preview-image">
                 </div>
               </div>
               {% endif %}
 
               {% if prediction_result %}
               <div class="prediction-result mt-4 text-start">
-                <h3 class="h5 fw-bold mb-3">Prediction Result</h3>
+                <h3 class="h5 fw-bold mb-3">Hasil Prediksi</h3>
                 <div class="result-card p-4 p-md-4">
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <span class="result-label">Disease</span>
+                      <span class="result-label">Penyakit</span>
                       <p class="result-value mb-0">{{ prediction_result.disease_name }}</p>
                     </div>
                     <div class="col-md-6">
-                      <span class="result-label">Confidence</span>
+                      <span class="result-label">Tingkat Keyakinan</span>
                       <p class="result-value mb-0">{{ (prediction_result.confidence * 100) | round(2) }}%</p>
                     </div>
                     <div class="col-12">
-                      <span class="result-label">Description</span>
+                      <span class="result-label">Deskripsi</span>
                       <p class="result-text mb-0">{{ prediction_result.description }}</p>
                     </div>
                     <div class="col-12">
-                      <span class="result-label">Recommendation</span>
+                      <span class="result-label">Rekomendasi</span>
                       <p class="result-text mb-0">{{ prediction_result.recommendation }}</p>
                     </div>
+                  </div>
+                </div>
+
+                <!-- Probabilitas per kelas -->
+                <h3 class="h5 fw-bold mb-3 mt-4">Analisa Probabilitas Setiap Kelas</h3>
+                <div class="result-card p-4 p-md-4">
+                  <div class="probability-list">
+                    {% for class_name, prob in prediction_result.class_probabilities.items() %}
+                    <div class="probability-item mb-3">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="prob-class-name fw-semibold">{{ class_name }}</span>
+                        <span
+                          class="prob-percentage fw-bold {% if class_name == prediction_result.disease_name %}text-accent{% endif %}">{{
+                          prob }}%</span>
+                      </div>
+                      <div class="progress prob-progress-bar">
+                        <div
+                          class="progress-bar {% if class_name == prediction_result.disease_name %}prob-bar-active{% else %}prob-bar-default{% endif %}"
+                          role="progressbar" style="width: {{ prob }}%" aria-valuenow="{{ prob }}" aria-valuemin="0"
+                          aria-valuemax="100"></div>
+                      </div>
+                    </div>
+                    {% endfor %}
                   </div>
                 </div>
               </div>
               {% endif %}
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="features" class="py-5">
-    <div class="container">
-      <div class="row g-4">
-        <div class="col-md-4">
-          <div class="feature-card h-100 p-4">
-            <h3 class="h5 fw-bold">Responsive Layout</h3>
-            <p class="mb-0 text-secondary">Built with Bootstrap 5 grid and utility classes for desktop and mobile screens.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100 p-4">
-            <h3 class="h5 fw-bold">Jinja Structure</h3>
-            <p class="mb-0 text-secondary">Base template inheritance keeps the UI modular and easy to extend in later phases.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100 p-4">
-            <h3 class="h5 fw-bold">Upload Ready</h3>
-            <p class="mb-0 text-secondary">The upload card is visually prepared without wiring any backend processing yet.</p>
           </div>
         </div>
       </div>
