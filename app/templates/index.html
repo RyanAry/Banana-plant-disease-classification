@@ -90,7 +90,7 @@
 
               {% if prediction_result %}
               <div class="prediction-result mt-4 text-start">
-                <h3 class="h5 fw-bold mb-3">Hasil Prediksi</h3>
+                <h3 class="h5 fw-bold mb-3 text-white">Hasil Prediksi</h3>
                 <div class="result-card p-4 p-md-4">
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -113,7 +113,7 @@
                 </div>
 
                 <!-- Probabilitas per kelas -->
-                <h3 class="h5 fw-bold mb-3 mt-4">Analisa Probabilitas Setiap Kelas</h3>
+                <h3 class="h5 fw-bold mb-3 mt-4 text-white">Analisa Probabilitas Setiap Kelas</h3>
                 <div class="result-card p-4 p-md-4">
                   <div class="probability-list">
                     {% for class_name, prob in prediction_result.class_probabilities.items() %}
@@ -128,7 +128,8 @@
                         <div
                           class="progress-bar {% if class_name == prediction_result.disease_name %}prob-bar-active{% else %}prob-bar-default{% endif %}"
                           role="progressbar" style="width: {{ prob }}%" aria-valuenow="{{ prob }}" aria-valuemin="0"
-                          aria-valuemax="100"></div>
+                          aria-valuemax="100">
+                        </div>
                       </div>
                     </div>
                     {% endfor %}
