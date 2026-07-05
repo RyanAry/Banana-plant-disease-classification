@@ -24,7 +24,7 @@ Model Machine Learning dilatih menggunakan dataset daun pisang yang telah melalu
 ## 1. Clone / Download Project
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/RyanAry/Banana-plant-disease-classification.git
 ```
 
 atau ekstrak file ZIP.
@@ -34,7 +34,7 @@ atau ekstrak file ZIP.
 ## 2. Masuk ke Folder Project
 
 ```bash
-cd classification_penyakit_pohon_pisang
+cd Banana Leaf Disease Classification
 ```
 
 ---
