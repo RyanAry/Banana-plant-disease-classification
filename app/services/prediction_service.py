@@ -9,12 +9,16 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from app.services.feature_vector_service import extract_feature_vector
 from app.services.preprocessing_service import preprocess_image_path
 
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+SCALER_PATH = BASE_DIR / "extracted_dataset" / "scaler.pkl"
 
 
 @dataclass(frozen=True)
@@ -77,6 +81,7 @@ DISEASE_DISPLAY_NAMES: dict[str, str] = {
 # ---------- hash-based model cache ----------
 
 _model_cache: dict[str, tuple[str, dict[str, Any]]] = {}
+_scaler_cache: dict[str, tuple[str, MinMaxScaler]] = {}
 
 
 def _file_hash(path: Path) -> str:
@@ -87,6 +92,38 @@ def _file_hash(path: Path) -> str:
 		while chunk := f.read(65_536):
 			hasher.update(chunk)
 	return hasher.hexdigest()
+
+
+def load_scaler(scaler_path: Path = SCALER_PATH) -> MinMaxScaler | None:
+	"""Load and cache the MinMaxScaler used during training."""
+	if not scaler_path.exists():
+		logger.warning("Scaler file not found at %s, skipping normalization", scaler_path)
+		return None
+
+	try:
+		current_hash = _file_hash(scaler_path)
+	except OSError:
+		logger.warning("Scaler file not readable at %s", scaler_path)
+		return None
+
+	cache_key = str(scaler_path.resolve())
+	cached = _scaler_cache.get(cache_key)
+
+	if cached is not None:
+		cached_hash, cached_scaler = cached
+		if cached_hash == current_hash:
+			logger.debug("Scaler cache hit for %s", scaler_path)
+			return cached_scaler
+		logger.info("Scaler file changed on disk, reloading: %s", scaler_path)
+
+	try:
+		logger.info("Loading scaler from %s", scaler_path)
+		scaler = joblib.load(scaler_path)
+		_scaler_cache[cache_key] = (current_hash, scaler)
+		return scaler
+	except Exception:
+		logger.warning("Failed to load scaler from %s", scaler_path)
+		return None
 
 
 def load_model_artifact(model_path: str) -> dict[str, Any]:
@@ -186,6 +223,14 @@ def predict_image(image_path: str | Path, model_path: str) -> PredictionResult:
 		preprocessed_image = preprocess_image_path(image_path)
 		feature_vector = extract_feature_vector(preprocessed_image)
 		features = pd.DataFrame([[feature_vector[column] for column in feature_columns]], columns=feature_columns)
+
+		# Normalisasi fitur menggunakan scaler yang sama saat training
+		scaler = load_scaler()
+		if scaler is not None:
+			logger.info("Applying MinMaxScaler normalization to features...")
+			features[feature_columns] = scaler.transform(features[feature_columns])
+		else:
+			logger.warning("Scaler not available, using raw features")
 	except Exception as error:
 		logger.error("Feature extraction failed: %s", error)
 		raise FeatureExtractionError("Ekstraksi fitur gagal untuk gambar yang diunggah.") from error
